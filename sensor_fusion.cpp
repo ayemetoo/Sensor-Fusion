@@ -21,7 +21,7 @@ void readReg(uint8_t reg, uint8_t *buf, size_t len)
 	for (int i = 0; i < len; i++) {
 		buf[i] = Wire.read();
 	}
-	Wire.endTransmission();
+	//Wire.endTransmission();
 	
 }
 
