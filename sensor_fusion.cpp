@@ -6,6 +6,15 @@ void readReg(uint8_t reg, uint8_t *buf, size_t len)
 {
     // TODO: Implement
 	//page 36
+	Wire.beginTransmission(0x68); //start condition?
+	Wire.write(0x68); //slave address + write bit (0)
+	Wire.endTransmission(false);
+	//acknowledge?
+	Wire.beginTransmission(0x68);
+	Wire.write(reg);
+	Wire.endTransmission(false);
+	//acknowledge?
+	
 	
 }
 
