@@ -24,6 +24,11 @@ void writeReg(uint8_t reg, uint8_t *buf, size_t len)
 {
     // TODO: Implement
 	//page 35
+	
+	Wire.beginTransmission(byte(0x68)); // send AD+W = 0x68 + W bit (0)
+	Wire.write(reg); // send RA
+	Wire.write(buf,len); // send DATA
+	Wire.endTransmission(true); //send stop signal
 }
 
 float vector_normalize(struct vector *raw, struct vector *unit)
