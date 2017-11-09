@@ -5,12 +5,12 @@
    Takes in two arrays, acc and gyro. If data is available, acc and gyro
    will be filled with the x y z coordinates and the function returns true.
    Otherwise it returns false and arrays are not touched.*/
-bool getData(uint16_t *acc, uint16_t *gyro) {
+bool getData(int *acc, int *gyro) {
   uint8_t *buf;
   readReg(INT_STATUS, buf, 1);
   if (buf[7] == 1) {
     uint8_t *buffMccree;
-    uint16_t x_a, y_a, z_a,
+    int x_a, y_a, z_a,
              x_g, y_g, z_g;
 
     // 59 & 60
@@ -76,12 +76,36 @@ bool getData(uint16_t *acc, uint16_t *gyro) {
 
 void setup() {
   int max_Samples = 75;
-  uint16_t *acc, *gyro;
+  int *acc, *gyro;
+
+  int bias_xa = 0;
+  int bias_ya = 0;
+  int bias_za = 0;
+
+  int bias_xg = 0;
+  int bias_yg = 0;
+  int bias_zg = 0;
 
   // Get samples
   for (int i = 0; i < max_Samples; i++) {
     getData(acc, gyro);
+
+    bias_xa += acc[0] - 0;
+    bias_ya += acc[1] - 0;
+    bias_za += acc[2] - 9.81;
+
+    bias_xg += gyro[0] - 0;
+    bias_yg += gyro[1] - 0;
+    bias_zg += gyro[2] - 0;
   }
+
+  bias_xa /= max_Samples;
+  bias_ya /= max_Samples;
+  bias_za /= max_Samples;
+
+  bias_xg /= max_Samples;
+  bias_yg /= max_Samples;
+  bias_zg /= max_Samples;
 }
 
 void loop() {
