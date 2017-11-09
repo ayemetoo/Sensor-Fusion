@@ -7,14 +7,21 @@ void readReg(uint8_t reg, uint8_t *buf, size_t len)
     // TODO: Implement
 	//page 36
 	Wire.beginTransmission(0x68); //start condition?
-	Wire.write(0x68); //slave address + write bit (0)
+	Wire.write(0xD0); //slave address + write bit (0)
+	//Wire.endTransmission(false);
+	//acknowledge?
+	//Wire.beginTransmission(0x68); //slave address
+	Wire.write(reg,8); 
 	Wire.endTransmission(false);
 	//acknowledge?
-	Wire.beginTransmission(0x68);
-	Wire.write(reg);
-	Wire.endTransmission(false);
-	//acknowledge?
-	
+	//Wire.beginTransmission(0x68); //slave address
+	Wire.write(0xD1); //slave address + read bit (1)
+	//Wire.endTransmission(false);
+	Wire.requestFrom(0x68,len); //request the reg
+	for (int i = 0; i < len; i++) {
+		buf[i] = Wire.read();
+	}
+	Wire.endTransmission();
 	
 }
 
