@@ -3,18 +3,8 @@
 
 bool getData(int *acc, int *gyro);
 
-
+struct vector bias_a, bias_g, acc, gyro;
 int max_Samples = 75;
-
-int bias_xa = 0;
-int bias_ya = 0;
-int bias_za = 0;
-
-int bias_xg = 0;
-int bias_yg = 0;
-int bias_zg = 0;
-
-int *accData, *gyroData;
 
 void setup() {
   //configure device
@@ -23,47 +13,59 @@ void setup() {
   //detection of high-velocity rotations
   //set CONFIG register to the largest possible bandwidth
 
-  int *acc, *gyro;
+  bias_a.x = bias_a.y = bias_a.z = 0;
+  bias_g.x = bias_g.y = bias_g.z = 0;
+
   // Get samples
   for (int i = 0; i < max_Samples; i++) {
-    getData(acc, gyro);
+    getData();
 
-    bias_xa += acc[0] - 0;
-    bias_ya += acc[1] - 0;
-    bias_za += acc[2] - 9.81;
+    bias_a.x += acc.x - 0;
+    bias_a.y += acc.y - 0;
+    bias_a.z += acc.z - 9.81;
 
-    bias_xg += gyro[0] - 0;
-    bias_yg += gyro[1] - 0;
-    bias_zg += gyro[2] - 0;
+    bias_g.x += gyro.x - 0;
+    bias_g.y += gyro.y - 0;
+    bias_g.z += gyro.z - 0;
   }
 
-  bias_xa /= max_Samples;
-  bias_ya /= max_Samples;
-  bias_za /= max_Samples;
+  bias_a.x /= max_Samples;
+  bias_a.y /= max_Samples;
+  bias_z.z /= max_Samples;
 
-  bias_xg /= max_Samples;
-  bias_yg /= max_Samples;
-  bias_zg /= max_Samples;
+  bias_g.x /= max_Samples;
+  bias_g.y /= max_Samples;
+  bias_g.z /= max_Samples;
 
   Serial.begin(9600);
 
-  Serial.println("Bias_xA= " + bias_xa);
-  Serial.println("Bias_yA= " + bias_ya);
-  Serial.println("Bias_zA= " + bias_za);
+  Serial.println("Bias_xA= " + bias_a.x);
+  Serial.println("Bias_yA= " + bias_a.y);
+  Serial.println("Bias_zA= " + bias_a.z);
 
-  Serial.println("Bias_xG= " + bias_xg);
-  Serial.println("Bias_yG= " + bias_yg);
-  Serial.println("Bias_zG= " + bias_zg);
+  Serial.println("Bias_xG= " + bias_g.x);
+  Serial.println("Bias_yG= " + bias_g.y);
+  Serial.println("Bias_zG= " + bias_g.z);
 
 }
 
 void loop() {
-  if (getData(accData,gyroData)){
-    Serial.println(accData[0]+' '+accData[1]+' '+accData[2]);
-    Serial.println(gyroData[0]+' '+gyroData[1]+' '+gyroData[2]);
+  if (getData()){
+    printVector(acc);
+    printVector(gyro);
   }
 }
 
+void printVector(struct vector v){
+  Serial.print(v.x);
+  Serial.print(" ");
+  Serial.print(v.y);
+  Serial.print(" ");
+  Serial.print(v.z);
+  Serial.println();
+}
+
+//change comment
 /* Get data about x y z coordinates from accelerometer and gyroscope.
    Takes in two arrays, acc and gyro. If data is available, acc and gyro
    will be filled with the x y z coordinates and the function returns true.
@@ -72,65 +74,19 @@ bool getData(int *acc, int *gyro) {
   uint8_t *buf;
   readReg(INT_STATUS, buf, 1);
   if (buf[7] == 1) {
-    uint8_t *buffMccree;
-    int x_a, y_a, z_a,
-        x_g, y_g, z_g;
-
-    // 59 & 60
-    readReg(0x3B, buffMccree, 1);
-    x_a = *buffMccree;
-    x_a = x_a << 8;
-
-    readReg(0x3C, buffMccree, 1);
-    x_a = x_a | *buffMccree;
-
-    // 61 & 62
-    readReg(0x3D, buffMccree, 1);
-    y_a = *buffMccree;
-    y_a = y_a << 8;
-
-    readReg(0x3E, buffMccree, 1);
-    y_a = y_a | *buffMccree;
-
-    // 63 & 64
-    readReg(0x3F, buffMccree, 1);
-    z_a = *buffMccree;
-    z_a = z_a << 8;
-
-    readReg(0x40, buffMccree, 1);
-    z_a = z_a | *buffMccree;
-
-    // 67 & 68
-    readReg(0x43, buffMccree, 1);
-    x_g = *buffMccree;
-    x_g = x_g << 8;
-
-    readReg(0x44, buffMccree, 1);
-    x_g = x_g | *buffMccree;
-
-    // 69 & 70
-    readReg(0x45, buffMccree, 1);
-    y_g = *buffMccree;
-    y_g = y_g << 8;
-
-    readReg(0x46, buffMccree, 1);
-    y_g = y_g | *buffMccree;
-
-    // 71 & 72
-    readReg(0x47, buffMccree, 1);
-    z_g = *buffMccree;
-    z_g = z_g << 8;
-
-    readReg(0x48, buffMccree, 1);
-    z_g = z_g | *buffMccree;
-
-    acc[0] = x_a;
-    acc[1] = y_a;
-    acc[2] = z_a;
-
-    gyro[0] = x_g;
-    gyro[1] = y_g;
-    gyro[2] = z_g;
+    byte* ptr = &(acc);
+    byte reg;
+    
+    for(reg=0x3B;reg<=0x40;reg++){
+      readReg(reg, ptr, 1);
+      ptr++;
+    }
+    
+    ptr = &(gyro);
+    for(reg=0x43;reg<=0x48;reg++){
+      readReg(reg, ptr, 1);
+      ptr++;
+    }
 
     return 1;
   }
