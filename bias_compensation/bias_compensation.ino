@@ -9,18 +9,18 @@ void setup() {
   //set PWR_MGMT_1 register to take the IMU out of sleep mode
   uint8_t *pwr_mgmt_1;
   readReg(0x6B, pwr_mgmt_1, 1);
-  *pwr_mgmt_1 = 0xBF & pwr_mgmt_1; //disable SLEEP
+  *pwr_mgmt_1 = 0xBF & *pwr_mgmt_1; //disable SLEEP
   writeReg(0x6B, pwr_mgmt_1, 1);
   //set GYRO_CONFIG register to the largest possible full-scale range to enable the
   //detection of high-velocity rotations
   uint8_t *gyro_config;
   readReg(0x1B, gyro_config, 1);
-  *gyro_config = 0x18 | gyro_config; //highest thingy
+  *gyro_config = 0x18 | *gyro_config; //highest thingy
   writeReg(0x1B, gyro_config, 1);
   //set CONFIG register to the largest possible bandwidth
   uint8_t *configy;
   readReg(0x1A, configy, 1);
-  *configy = 0xFC & configy;
+  *configy = 0xFC & *configy;
   writeReg(0x1A, configy, 1);
   
   bias_a.x = bias_a.y = bias_a.z = 0;
