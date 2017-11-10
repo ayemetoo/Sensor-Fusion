@@ -1,6 +1,54 @@
 #include <sensor_fusion.h>
 // DEFINE INT_STATUS IN HEADER
 
+bool getData(int *acc, int *gyro);
+
+
+  int max_Samples = 75;
+  
+  int bias_xa = 0;
+  int bias_ya = 0;
+  int bias_za = 0;
+
+  int bias_xg = 0;
+  int bias_yg = 0;
+  int bias_zg = 0;
+  
+void setup() {
+  //configure device
+  //set PWR_MGMT_1 register to take the IMU out of sleep mode
+  //set GYRO_CONFIG register to the largest possible full-scale range to enable the 
+  //detection of high-velocity rotations
+  //set CONFIG register to the largest possible bandwidth
+  
+  int *acc, *gyro;
+  // Get samples
+  for (int i = 0; i < max_Samples; i++) {
+    getData(acc, gyro);
+
+    bias_xa += acc[0] - 0;
+    bias_ya += acc[1] - 0;
+    bias_za += acc[2] - 9.81;
+
+    bias_xg += gyro[0] - 0;
+    bias_yg += gyro[1] - 0;
+    bias_zg += gyro[2] - 0;
+  }
+
+  bias_xa /= max_Samples;
+  bias_ya /= max_Samples;
+  bias_za /= max_Samples;
+
+  bias_xg /= max_Samples;
+  bias_yg /= max_Samples;
+  bias_zg /= max_Samples;
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
+
 /* Get data about x y z coordinates from accelerometer and gyroscope.
    Takes in two arrays, acc and gyro. If data is available, acc and gyro
    will be filled with the x y z coordinates and the function returns true.
@@ -72,43 +120,4 @@ bool getData(int *acc, int *gyro) {
     return 1;
   }
   return 0;
-}
-
-void setup() {
-  int max_Samples = 75;
-  int *acc, *gyro;
-
-  int bias_xa = 0;
-  int bias_ya = 0;
-  int bias_za = 0;
-
-  int bias_xg = 0;
-  int bias_yg = 0;
-  int bias_zg = 0;
-
-  // Get samples
-  for (int i = 0; i < max_Samples; i++) {
-    getData(acc, gyro);
-
-    bias_xa += acc[0] - 0;
-    bias_ya += acc[1] - 0;
-    bias_za += acc[2] - 9.81;
-
-    bias_xg += gyro[0] - 0;
-    bias_yg += gyro[1] - 0;
-    bias_zg += gyro[2] - 0;
-  }
-
-  bias_xa /= max_Samples;
-  bias_ya /= max_Samples;
-  bias_za /= max_Samples;
-
-  bias_xg /= max_Samples;
-  bias_yg /= max_Samples;
-  bias_zg /= max_Samples;
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-
 }
