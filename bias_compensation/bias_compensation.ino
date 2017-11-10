@@ -4,23 +4,25 @@
 bool getData(int *acc, int *gyro);
 
 
-  int max_Samples = 75;
-  
-  int bias_xa = 0;
-  int bias_ya = 0;
-  int bias_za = 0;
+int max_Samples = 75;
 
-  int bias_xg = 0;
-  int bias_yg = 0;
-  int bias_zg = 0;
-  
+int bias_xa = 0;
+int bias_ya = 0;
+int bias_za = 0;
+
+int bias_xg = 0;
+int bias_yg = 0;
+int bias_zg = 0;
+
+int *accData, *gyroData;
+
 void setup() {
   //configure device
   //set PWR_MGMT_1 register to take the IMU out of sleep mode
-  //set GYRO_CONFIG register to the largest possible full-scale range to enable the 
+  //set GYRO_CONFIG register to the largest possible full-scale range to enable the
   //detection of high-velocity rotations
   //set CONFIG register to the largest possible bandwidth
-  
+
   int *acc, *gyro;
   // Get samples
   for (int i = 0; i < max_Samples; i++) {
@@ -42,11 +44,24 @@ void setup() {
   bias_xg /= max_Samples;
   bias_yg /= max_Samples;
   bias_zg /= max_Samples;
+
+  Serial.begin(9600);
+
+  Serial.println("Bias_xA= " + bias_xa);
+  Serial.println("Bias_yA= " + bias_ya);
+  Serial.println("Bias_zA= " + bias_za);
+
+  Serial.println("Bias_xG= " + bias_xg);
+  Serial.println("Bias_yG= " + bias_yg);
+  Serial.println("Bias_zG= " + bias_zg);
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  if (getData(accData,gyroData)){
+    Serial.println(accData[0]+' '+accData[1]+' '+accData[2]);
+    Serial.println(gyroData[0]+' '+gyroData[1]+' '+gyroData[2]);
+  }
 }
 
 /* Get data about x y z coordinates from accelerometer and gyroscope.
@@ -59,7 +74,7 @@ bool getData(int *acc, int *gyro) {
   if (buf[7] == 1) {
     uint8_t *buffMccree;
     int x_a, y_a, z_a,
-             x_g, y_g, z_g;
+        x_g, y_g, z_g;
 
     // 59 & 60
     readReg(0x3B, buffMccree, 1);
