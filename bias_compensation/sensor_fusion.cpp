@@ -7,7 +7,7 @@ void readReg(uint8_t reg, uint8_t *buf, size_t len)
     // TODO: Implement
 	//page 36
 	Wire.beginTransmission(0x68); //start condition?
-	Wire.write(reg,8); 
+	Wire.write(reg); 
 	Wire.endTransmission(false); 
 	
 	//restarts
