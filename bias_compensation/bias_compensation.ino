@@ -1,7 +1,5 @@
-#include <sensor_fusion.h>
+#include "sensor_fusion.h"
 // DEFINE INT_STATUS IN HEADER
-
-bool getData(int *acc, int *gyro);
 
 struct vector bias_a, bias_g, acc, gyro;
 int max_Samples = 75;
@@ -31,7 +29,7 @@ void setup() {
 
   bias_a.x /= max_Samples;
   bias_a.y /= max_Samples;
-  bias_z.z /= max_Samples;
+  bias_a.z /= max_Samples;
 
   bias_g.x /= max_Samples;
   bias_g.y /= max_Samples;
@@ -39,20 +37,19 @@ void setup() {
 
   Serial.begin(9600);
 
-  Serial.println("Bias_xA= " + bias_a.x);
-  Serial.println("Bias_yA= " + bias_a.y);
-  Serial.println("Bias_zA= " + bias_a.z);
-
-  Serial.println("Bias_xG= " + bias_g.x);
-  Serial.println("Bias_yG= " + bias_g.y);
-  Serial.println("Bias_zG= " + bias_g.z);
+  printVector(bias_a);
+  printVector(bias_g);
+  
 
 }
 
 void loop() {
   if (getData()){
-    printVector(acc);
-    printVector(gyro);
+    vector unit_a;
+    vector_normalize(&acc,&unit_a);
+    printVector(unit_a);
+    //vector_normalize(&gyro);
+    //printVector(gyro);
   }
 }
 
@@ -70,11 +67,11 @@ void printVector(struct vector v){
    Takes in two arrays, acc and gyro. If data is available, acc and gyro
    will be filled with the x y z coordinates and the function returns true.
    Otherwise it returns false and arrays are not touched.*/
-bool getData(int *acc, int *gyro) {
+bool getData() {
   uint8_t *buf;
-  readReg(INT_STATUS, buf, 1);
+  readReg(0x3A, buf, 1);
   if (buf[7] == 1) {
-    byte* ptr = &(acc);
+    byte* ptr = (byte*)&(acc);
     byte reg;
     
     for(reg=0x3B;reg<=0x40;reg++){
@@ -82,7 +79,7 @@ bool getData(int *acc, int *gyro) {
       ptr++;
     }
     
-    ptr = &(gyro);
+    ptr = (byte*)&(gyro);
     for(reg=0x43;reg<=0x48;reg++){
       readReg(reg, ptr, 1);
       ptr++;
