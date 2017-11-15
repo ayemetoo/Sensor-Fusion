@@ -20,23 +20,44 @@ void setup() {
   //set CONFIG register to the largest possible bandwidth
   uint8_t *configy;
   readReg(0x1A, configy, 1);
-  *configy = 0xFC & *configy;
+  *configy = 0xF8 & *configy;
   writeReg(0x1A, configy, 1);
-  
+  //enable DATA_RDY
+  uint8_t *RDY;
+  readReg(0x38, RDY, 1);
+  *RDY = *RDY | 0x01;
+  writeReg(0x38, RDY, 1);
+
+  Serial.begin(9600);
+
+  uint8_t *WHOAMI;
+  readReg(0x75,WHOAMI,1);
+  Serial.println(String(*WHOAMI));
+
   bias_a.x = bias_a.y = bias_a.z = 0;
   bias_g.x = bias_g.y = bias_g.z = 0;
 
   // Get samples
-  for (int i = 0; i < max_Samples; i++) {
-    getData();
+  for (int i = 1; i <= max_Samples; i++) {
 
-    bias_a.x += acc.x - 0;
-    bias_a.y += acc.y - 0;
-    bias_a.z += acc.z - 9.81;
+    if (getData()) {
 
-    bias_g.x += gyro.x - 0;
-    bias_g.y += gyro.y - 0;
-    bias_g.z += gyro.z - 0;
+      bias_a.x += acc.x - 0;
+      bias_a.y += acc.y - 0;
+      bias_a.z += acc.z - 9.81;
+
+      bias_g.x += gyro.x - 0;
+      bias_g.y += gyro.y - 0;
+      bias_g.z += gyro.z - 0;
+
+      Serial.println("Loop" + String(i));
+      printVector(bias_a);
+      printVector(bias_g);
+    }
+    else {
+      Serial.println("No data");
+      i--;
+    }
   }
 
   bias_a.x /= max_Samples;
@@ -47,25 +68,25 @@ void setup() {
   bias_g.y /= max_Samples;
   bias_g.z /= max_Samples;
 
-  Serial.begin(9600);
-
   printVector(bias_a);
   printVector(bias_g);
-  
+
 
 }
 
 void loop() {
-  if (getData()){
+  if (getData()) {
     vector unit_a;
-    vector_normalize(&acc,&unit_a);
+    vector_normalize(&acc, &unit_a);
     printVector(unit_a);
     //vector_normalize(&gyro);
     //printVector(gyro);
   }
+  else
+    Serial.println("No data");
 }
 
-void printVector(struct vector v){
+void printVector(struct vector v) {
   Serial.print(v.x);
   Serial.print(" ");
   Serial.print(v.y);
@@ -82,22 +103,23 @@ void printVector(struct vector v){
 bool getData() {
   uint8_t *buf;
   readReg(0x3A, buf, 1);
-  if (buf[7] == 1) {
-    byte* ptr = (byte*)&(acc);
+  Serial.println(String(*buf));
+  if ((*buf)&0x01) {
+    byte* ptr = (byte*) & (acc);
     byte reg;
-    
-    for(reg=0x3B;reg<=0x40;reg++){
-      readReg(reg, ptr, 1);
-      ptr++;
-    }
-    
-    ptr = (byte*)&(gyro);
-    for(reg=0x43;reg<=0x48;reg++){
+
+    for (reg = 0x3B; reg <= 0x40; reg++) {
       readReg(reg, ptr, 1);
       ptr++;
     }
 
-    return 1;
+    ptr = (byte*) & (gyro);
+    for (reg = 0x43; reg <= 0x48; reg++) {
+      readReg(reg, ptr, 1);
+      ptr++;
+    }
+
+    return true;
   }
-  return 0;
+  return false;
 }
