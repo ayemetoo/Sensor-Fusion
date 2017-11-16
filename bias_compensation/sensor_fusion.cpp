@@ -14,7 +14,7 @@ void readReg(uint8_t reg, uint8_t *buf, size_t len)
 	//Wire.endTransmission(false);
 	Wire.requestFrom(0x68,len); //request the reg
 	for (int i = 0; i < len; i++) {
-		while(!Wire.available()){}
+		//while(!Wire.available()){}
 		buf[i] = Wire.read();
 	}
 	Wire.endTransmission();
