@@ -33,10 +33,6 @@ void setup() {
 //  writeReg(0x38, &RDY, 1);
 
   Serial.begin(9600);
-  Serial.println("gyro ints are at");
-  Serial.println((int)&(gyro.x));
-  Serial.println((int)&(gyro.y));
-  Serial.println((int)&(gyro.z));
   //uint8_t *WHOAMI;
   //readReg(0x75,WHOAMI,1);
   //Serial.println(String(*WHOAMI));
@@ -49,9 +45,9 @@ void setup() {
 
     if (getData()) {
 
-      bias_a.x += acc.x - 0;
-      bias_a.y += acc.y - 0;
-      bias_a.z += acc.z - 1;
+      bias_a.x += (float)acc.x/16384 - 0;
+      bias_a.y += (float)acc.y/16384 - 0;
+      bias_a.z += (float)acc.z/16384 - 1;
 
       bias_g.x += gyro.x - 0;
       bias_g.y += gyro.y - 0;
@@ -86,10 +82,10 @@ void setup() {
 void loop() {
   if (getData()) {
     vector unit_a;
-    vector_normalize(&acc, &unit_a);
-    printVector(unit_a);
-    vector_normalize(&gyro);
-    printVector(gyro);
+    //vector_normalize(&acc, &unit_a);
+    //printVector(unit_a);
+    //vector_normalize(&gyro);
+    //printVector(gyro);
   }
 //  else
 //    Serial.println("No data");
@@ -105,12 +101,13 @@ void printVector(struct vector v) {
   Serial.println();
 }
 
+//convert to g's and print
 void printVector(struct data v) {
-  Serial.print(((float)v.x/8192));
+  Serial.print(((float)v.x/16384),4);
   Serial.print(" ");
-  Serial.print(((float)v.y/8192));
+  Serial.print(((float)v.y/16384),4);
   Serial.print(" ");
-  Serial.print(((float)v.z/8192));
+  Serial.print(((float)v.z/16384),4);
   Serial.println();
 }
 
