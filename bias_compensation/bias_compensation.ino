@@ -32,7 +32,7 @@ void setup() {
 //  RDY = RDY | 0x01;
 //  writeReg(0x38, &RDY, 1);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   //uint8_t *WHOAMI;
   //readReg(0x75,WHOAMI,1);
   //Serial.println(String(*WHOAMI));
@@ -81,13 +81,16 @@ void setup() {
 
 void loop() {
   if (getData()) {
-    //vector unit_a;
-    //vector_normalize(&acc, &unit_a);
-    Serial.print("Acc: ");
-    printVector(acc,"acc");
+    struct vector a=scaleReading(acc,"acc");
+    //struct vector g=scaleReading(gyro,"gyro");
+    vector unit_a;
+    vector_normalize(&a, &unit_a);
+    printVector(unit_a);
+    //Serial.print("Acc: ");
+    //printVector(acc,"acc");
     //vector_normalize(&gyro);
-    Serial.print("Gyro: ");
-    printVector(gyro,"gyro");
+    //Serial.print("Gyro: ");
+    //printVector(gyro,"gyro");
   }
 //  else
 //    Serial.println("No data");
@@ -101,6 +104,21 @@ void printVector(struct vector v) {
   Serial.print(" ");
   Serial.print(v.z,4);
   Serial.println();
+}
+
+struct vector scaleReading(struct data a, String s){
+  struct vector v;
+  if(s=="acc"){
+    v.x=(float)a.x/16384;
+    v.y=(float)a.y/16384;
+    v.z=(float)a.z/16384;
+  }
+  else {
+    v.x=(float)a.x/16.4;
+    v.y=(float)a.y/16.4;
+    v.z=(float)a.z/16.4;
+  }
+  return v;
 }
 
 //convert to g's and print
