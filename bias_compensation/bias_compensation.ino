@@ -109,14 +109,14 @@ void printVector(struct vector v) {
 struct vector scaleReading(struct data a, String s){
   struct vector v;
   if(s=="acc"){
-    v.x=(float)a.x/16384;
-    v.y=(float)a.y/16384;
-    v.z=(float)a.z/16384;
+    v.x=((float)a.x)/16384;
+    v.y=((float)a.y)/16384;
+    v.z=((float)a.z)/16384;
   }
   else {
-    v.x=(float)a.x/16.4;
-    v.y=(float)a.y/16.4;
-    v.z=(float)a.z/16.4;
+    v.x=((float)a.x)/16.4;
+    v.y=((float)a.y)/16.4;
+    v.z=((float)a.z)/16.4;
   }
   return v;
 }
@@ -176,7 +176,11 @@ bool getData() {
       ptr++;
     }
 
+    
+
     return true;
   }
   return false;
 }
+
+
