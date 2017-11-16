@@ -1,7 +1,7 @@
 #include "sensor_fusion.h"
 // DEFINE INT_STATUS IN HEADER
 
-struct vector bias_a, bias_g;
+struct vector bias_a, bias_g, orient;
 int max_Samples = 75;
 
 struct data{
@@ -41,19 +41,19 @@ void setup() {
   bias_g.x = bias_g.y = bias_g.z = 0;
 
   // Get samples
-  /*for (int i = 1; i <= max_Samples; i++) {
+  for (int i = 1; i <= max_Samples; i++) {
 
     if (getData()) {
 
       bias_a.x += ((float)acc.x)/16384 - 0;
-      bias_a.y += (float)acc.y/16384 - 0;
-      bias_a.z += ((float)acc.z/16384) - 1;
+      bias_a.y += ((float)acc.y)/16384 - 0;
+      bias_a.z += ((float)acc.z)/16384 - 1;
 
-      bias_g.x += (float)gyro.x/16 - 0;
-      bias_g.y += (float)gyro.y/16 - 0;
-      bias_g.z += (float)gyro.z/16 - 0;
+      bias_g.x += (float)gyro.x/16.4 - 0;
+      bias_g.y += (float)gyro.y/16.4 - 0;
+      bias_g.z += (float)gyro.z/16.4 - 0;
 
-      Serial.println("Loop" + String(i));
+      //Serial.println("Loop" + String(i));
       //printVector(bias_a);
       //printVector(bias_g);
       //printVector(acc,"acc");
@@ -73,27 +73,42 @@ void setup() {
   bias_g.y /= max_Samples;
   bias_g.z /= max_Samples;
 
-  printVector(bias_a);
-  printVector(bias_g);*/
-
-
+//  printVector(bias_a);
+//  printVector(bias_g);
+  //init orient to up
+  orient.x = orient.y = 0;
+  orient.y = 1;
 }
+
+unsigned long time = 0;
+unsigned long prev_time = 0;
 
 void loop() {
   if (getData()) {
+    //find unit acceleration vector
     struct vector a=scaleReading(acc,"acc");
-    //struct vector g=scaleReading(gyro,"gyro");
     vector unit_a;
     vector_normalize(&a, &unit_a);
     printVector(unit_a);
-    //Serial.print("Acc: ");
-    //printVector(acc,"acc");
-    //vector_normalize(&gyro);
-    //Serial.print("Gyro: ");
-    //printVector(gyro,"gyro");
+
+    //rotate quaternion to show orientation
+    struct vector g = scaleReading(gyro,"gyro");
+    vector unit_g;
+    float len = vector_normalize(&g, &unit_g);
+    struct quaternion q;
+    time = micros();
+    quaternion_create(&unit_g, len*(time-prev_time)/1000000, &q);
+    prev_time = time;
+
+    vector result;
+    quaternion_rotate(&orient, &q, &result);
+    orient = result;
+    Serial.print(" ");
+    printVector(result);
+    Serial.println();
   }
-//  else
-//    Serial.println("No data");
+
+  
   delay(100);
 }
 
@@ -103,20 +118,21 @@ void printVector(struct vector v) {
   Serial.print(v.y,4);
   Serial.print(" ");
   Serial.print(v.z,4);
-  Serial.println();
+  //Serial.println();
 }
 
 struct vector scaleReading(struct data a, String s){
   struct vector v;
   if(s=="acc"){
-    v.x=((float)a.x)/16384;
-    v.y=((float)a.y)/16384;
-    v.z=((float)a.z)/16384;
+    v.x=((float)a.x)/16384-bias_a.x;
+    v.y=((float)a.y)/16384-bias_a.y;
+    v.z=((float)a.z)/16384-bias_a.z;
   }
   else {
-    v.x=((float)a.x)/16.4;
-    v.y=((float)a.y)/16.4;
-    v.z=((float)a.z)/16.4;
+    v.x=((float)a.x)/16.4-bias_g.x;
+    v.y=((float)a.y)/16.4-bias_g.y;
+    v.z=((float)a.z)/16.4-bias_g.z;
+    
   }
   return v;
 }
@@ -147,36 +163,31 @@ void printVector(struct data v, String s) {
    will be filled with the x y z coordinates and the function returns true.
    Otherwise it returns false and arrays are not touched.*/
 bool getData() {
-  uint8_t buf;
+  uint8_t buf,buf2;
   readReg(0x3A, &buf, 1);
   //Serial.println(String(buf));
   if ((buf)&0x01) {
-    //sets ptr to acc (data structure for acc)
-    byte* ptr = (byte*) & (acc);
-    byte reg;
+    //read acc
+    readReg(0x3B, &buf, 1);
+    readReg(0x3C, &buf2, 1);
+    acc.x = (buf<<8) | buf2;
+    readReg(0x3D, &buf, 1);
+    readReg(0x3E, &buf2, 1);
+    acc.y = (buf<<8) | buf2;
+    readReg(0x3F, &buf, 1);
+    readReg(0x40, &buf2, 1);
+    acc.z = (buf<<8) | buf2;
 
-    //sets the ints for acc byte by byte
-    for (reg = 0x3B; reg <= 0x40; reg++) {
-      readReg(reg, ptr, 1);
-//      Serial.print("reg ");
-//      Serial.println(reg);
-//      Serial.print("val ");
-//      Serial.println(*ptr);
-      ptr++;
-    }
-
-    //sets gyro byte by byte
-    ptr = (byte*) & (gyro);
-    for (reg = 0x43; reg <= 0x48; reg++) {
-      readReg(reg, ptr, 1);
-//      Serial.print("reg ");
-//      Serial.println(reg);
-//      Serial.print("val ");
-//      Serial.println(*ptr);
-      ptr++;
-    }
-
-    
+    //read gyro
+    readReg(0x43, &buf, 1);
+    readReg(0x44, &buf2, 1);
+    gyro.x = (buf<<8) | buf2;
+    readReg(0x45, &buf, 1);
+    readReg(0x46, &buf2, 1);
+    gyro.y = (buf<<8) | buf2;
+    readReg(0x47, &buf, 1);
+    readReg(0x48, &buf2, 1);
+    gyro.z = (buf<<8) | buf2;
 
     return true;
   }
