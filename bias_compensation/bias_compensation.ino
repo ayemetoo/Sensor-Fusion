@@ -41,23 +41,23 @@ void setup() {
   bias_g.x = bias_g.y = bias_g.z = 0;
 
   // Get samples
-  for (int i = 1; i <= max_Samples; i++) {
+  /*for (int i = 1; i <= max_Samples; i++) {
 
     if (getData()) {
 
-      bias_a.x += (float)acc.x/16384 - 0;
+      bias_a.x += ((float)acc.x)/16384 - 0;
       bias_a.y += (float)acc.y/16384 - 0;
-      bias_a.z += (float)acc.z/16384 - 1;
+      bias_a.z += ((float)acc.z/16384) - 1;
 
-      bias_g.x += gyro.x - 0;
-      bias_g.y += gyro.y - 0;
-      bias_g.z += gyro.z - 0;
+      bias_g.x += (float)gyro.x/16 - 0;
+      bias_g.y += (float)gyro.y/16 - 0;
+      bias_g.z += (float)gyro.z/16 - 0;
 
       Serial.println("Loop" + String(i));
       //printVector(bias_a);
       //printVector(bias_g);
-      printVector(acc);
-      printVector(gyro);
+      //printVector(acc,"acc");
+      //printVector(gyro,"gyro");
     }
     else {
       //Serial.println("No data");
@@ -74,18 +74,20 @@ void setup() {
   bias_g.z /= max_Samples;
 
   printVector(bias_a);
-  printVector(bias_g);
+  printVector(bias_g);*/
 
 
 }
 
 void loop() {
   if (getData()) {
-    vector unit_a;
+    //vector unit_a;
     //vector_normalize(&acc, &unit_a);
-    //printVector(unit_a);
+    Serial.print("Acc: ");
+    printVector(acc,"acc");
     //vector_normalize(&gyro);
-    //printVector(gyro);
+    Serial.print("Gyro: ");
+    printVector(gyro,"gyro");
   }
 //  else
 //    Serial.println("No data");
@@ -102,13 +104,23 @@ void printVector(struct vector v) {
 }
 
 //convert to g's and print
-void printVector(struct data v) {
-  Serial.print(((float)v.x/16384),4);
-  Serial.print(" ");
-  Serial.print(((float)v.y/16384),4);
-  Serial.print(" ");
-  Serial.print(((float)v.z/16384),4);
-  Serial.println();
+void printVector(struct data v, String s) {
+  if (s=="acc"){
+    Serial.print((((float)v.x)/16384),4);
+    Serial.print(" ");
+    Serial.print((((float)v.y)/16384),4);
+    Serial.print(" ");
+    Serial.print((((float)v.z)/16384),4);
+    Serial.println();
+  }
+  else {
+    Serial.print((((float)v.x)/16.4),4);
+    Serial.print(" ");
+    Serial.print((((float)v.y)/16.4),4);
+    Serial.print(" ");
+    Serial.print((((float)v.z)/16.4),4);
+    Serial.println();
+  }
 }
 
 //change comment
@@ -121,9 +133,11 @@ bool getData() {
   readReg(0x3A, &buf, 1);
   //Serial.println(String(buf));
   if ((buf)&0x01) {
+    //sets ptr to acc (data structure for acc)
     byte* ptr = (byte*) & (acc);
     byte reg;
 
+    //sets the ints for acc byte by byte
     for (reg = 0x3B; reg <= 0x40; reg++) {
       readReg(reg, ptr, 1);
 //      Serial.print("reg ");
@@ -133,6 +147,7 @@ bool getData() {
       ptr++;
     }
 
+    //sets gyro byte by byte
     ptr = (byte*) & (gyro);
     for (reg = 0x43; reg <= 0x48; reg++) {
       readReg(reg, ptr, 1);
