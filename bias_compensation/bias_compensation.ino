@@ -49,9 +49,9 @@ void setup() {
       bias_a.y += ((float)acc.y)/16384 - 0;
       bias_a.z += ((float)acc.z)/16384 - 1;
 
-      bias_g.x += (float)gyro.x/16.4 - 0;
-      bias_g.y += (float)gyro.y/16.4 - 0;
-      bias_g.z += (float)gyro.z/16.4 - 0;
+      bias_g.x += ((float)gyro.x)/16.4 - 0;
+      bias_g.y += ((float)gyro.y)/16.4 - 0;
+      bias_g.z += ((float)gyro.z)/16.4 - 0;
 
       //Serial.println("Loop" + String(i));
       //printVector(bias_a);
@@ -77,7 +77,7 @@ void setup() {
 //  printVector(bias_g);
   //init orient to up
   orient.x = orient.y = 0;
-  orient.y = 1;
+  orient.z = 1;
 }
 
 unsigned long time = 0;
@@ -97,6 +97,9 @@ void loop() {
     float len = vector_normalize(&g, &unit_g);
     struct quaternion q;
     time = micros();
+    //Serial.print(" ");
+    //Serial.println(len,4);
+
     quaternion_create(&unit_g, len*(time-prev_time)/1000000, &q);
     prev_time = time;
 
@@ -104,7 +107,7 @@ void loop() {
     quaternion_rotate(&orient, &q, &result);
     orient = result;
     Serial.print(" ");
-    printVector(result);
+    printVector(orient);
     Serial.println();
   }
 
