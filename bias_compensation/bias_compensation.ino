@@ -80,7 +80,7 @@ void setup() {
   orient.z = 1;
 }
 
-unsigned long time = 0;
+unsigned long timel = 0;
 unsigned long prev_time = 0;
 
 void loop() {
@@ -96,31 +96,46 @@ void loop() {
     vector unit_g;
     float len = vector_normalize(&g, &unit_g);
     struct quaternion q;
-    time = micros();
+    timel = micros();
     //Serial.print(" ");
     //Serial.println(len,4);
 
-    quaternion_create(&unit_g, len*(time-prev_time)/1000000, &q);
-    prev_time = time;
+    quaternion_create(&unit_g, len*(timel-prev_time)/1000000, &q);
+    prev_time = timel;
 
     vector result;
     quaternion_rotate(&orient, &q, &result);
     orient = result;
     Serial.print(" ");
     printVector(orient);
+
+    //complementary filter
+
+    //apply low/high pass filter
+
+    //add and normalize
+    vector comp,sum,p1,p2;
+    float alpha = 0.9;
+    vector_multiply(&unit_a, alpha, &p1);
+    vector_multiply(&orient, 1-alpha, &p2);
+    vector_add(&p1, &p2, &sum);
+    vector_normalize(&sum, &comp);
+
+    Serial.print(" ");
+    printVector(comp);
     Serial.println();
   }
 
   
-  delay(100);
+  delay(10);
 }
 
 void printVector(struct vector v) {
-  Serial.print(v.x,4);
+  Serial.print(v.x);
   Serial.print(" ");
-  Serial.print(v.y,4);
+  Serial.print(v.y);
   Serial.print(" ");
-  Serial.print(v.z,4);
+  Serial.print(v.z);
   //Serial.println();
 }
 
