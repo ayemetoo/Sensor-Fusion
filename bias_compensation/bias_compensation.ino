@@ -1,8 +1,10 @@
 #include "sensor_fusion.h"
 // DEFINE INT_STATUS IN HEADER
 
-struct vector bias_a, bias_g, orient;
+struct vector bias_a, bias_g, orient, orient_c;
 int max_Samples = 75;
+unsigned long timel = 0;
+unsigned long prev_time = 0;
 
 struct data{
   int x,y,z;
@@ -49,9 +51,9 @@ void setup() {
       bias_a.y += ((float)acc.y)/16384 - 0;
       bias_a.z += ((float)acc.z)/16384 - 1;
 
-      bias_g.x += ((float)gyro.x)/16.4 - 0;
-      bias_g.y += ((float)gyro.y)/16.4 - 0;
-      bias_g.z += ((float)gyro.z)/16.4 - 0;
+      bias_g.x += ((float)gyro.x)/16.384 - 0;
+      bias_g.y += ((float)gyro.y)/16.384 - 0;
+      bias_g.z += ((float)gyro.z)/16.384 - 0;
 
       //Serial.println("Loop" + String(i));
       //printVector(bias_a);
@@ -78,10 +80,12 @@ void setup() {
   //init orient to up
   orient.x = orient.y = 0;
   orient.z = 1;
+
+  orient_c.x = orient_c.y = 0;
+  orient_c.z = 1;
 }
 
-unsigned long timel = 0;
-unsigned long prev_time = 0;
+
 
 void loop() {
   if (getData()) {
@@ -100,7 +104,12 @@ void loop() {
     //Serial.print(" ");
     //Serial.println(len,4);
 
-    quaternion_create(&unit_g, len*(timel-prev_time)/1000000, &q);
+    //deal with init case
+    if(prev_time == 0) len = 0;
+
+//    float timebt = (timel-prev_time)/1000.0;
+//    Serial.println(timebt,4);
+    quaternion_create(&unit_g, -len/2600, &q);
     prev_time = timel;
 
     vector result;
@@ -114,10 +123,12 @@ void loop() {
     //apply low/high pass filter
 
     //add and normalize
-    vector comp,sum,p1,p2;
-    float alpha = 0.9;
+    vector comp,sum,p1,p2,r;
+    
+    quaternion_rotate(&orient_c, &q, &r);
+    float alpha = 0.1;
     vector_multiply(&unit_a, alpha, &p1);
-    vector_multiply(&orient, 1-alpha, &p2);
+    vector_multiply(&r, 1-alpha, &p2);
     vector_add(&p1, &p2, &sum);
     vector_normalize(&sum, &comp);
 
@@ -147,9 +158,9 @@ struct vector scaleReading(struct data a, String s){
     v.z=((float)a.z)/16384-bias_a.z;
   }
   else {
-    v.x=((float)a.x)/16.4-bias_g.x;
-    v.y=((float)a.y)/16.4-bias_g.y;
-    v.z=((float)a.z)/16.4-bias_g.z;
+    v.x=((float)a.x)/16.384-bias_g.x;
+    v.y=((float)a.y)/16.384-bias_g.y;
+    v.z=((float)a.z)/16.384-bias_g.z;
     
   }
   return v;
@@ -175,11 +186,10 @@ void printVector(struct data v, String s) {
   }
 }
 
-//change comment
 /* Get data about x y z coordinates from accelerometer and gyroscope.
-   Takes in two arrays, acc and gyro. If data is available, acc and gyro
+   Takes in two structs, acc and gyro. If data is available, acc and gyro
    will be filled with the x y z coordinates and the function returns true.
-   Otherwise it returns false and arrays are not touched.*/
+   Otherwise it returns false and structs are not touched.*/
 bool getData() {
   uint8_t buf,buf2;
   readReg(0x3A, &buf, 1);
