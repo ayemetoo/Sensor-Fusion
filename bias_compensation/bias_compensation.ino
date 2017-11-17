@@ -107,9 +107,9 @@ void loop() {
     //deal with init case
     if(prev_time == 0) len = 0;
 
-//    float timebt = (timel-prev_time)/1000.0;
+    float timebt = (timel-prev_time)/1000000.0;
 //    Serial.println(timebt,4);
-    quaternion_create(&unit_g, -len/2600, &q);
+    quaternion_create(&unit_g, -len*timebt, &q);
     prev_time = timel;
 
     vector result;
@@ -126,15 +126,17 @@ void loop() {
     vector comp,sum,p1,p2,r;
     
     quaternion_rotate(&orient_c, &q, &r);
-    float alpha = 0.1;
+    float alpha = 0.5;
     vector_multiply(&unit_a, alpha, &p1);
-    vector_multiply(&r, 1-alpha, &p2);
+    vector_multiply(&r, 1.0-alpha, &p2);
     vector_add(&p1, &p2, &sum);
     vector_normalize(&sum, &comp);
 
     Serial.print(" ");
     printVector(comp);
     Serial.println();
+
+    orient_c = comp;
   }
 
   
@@ -161,7 +163,9 @@ struct vector scaleReading(struct data a, String s){
     v.x=((float)a.x)/16.384-bias_g.x;
     v.y=((float)a.y)/16.384-bias_g.y;
     v.z=((float)a.z)/16.384-bias_g.z;
-    
+    v.x *= 0.017453;
+    v.y *= 0.017453;
+    v.z *= 0.017453;
   }
   return v;
 }
